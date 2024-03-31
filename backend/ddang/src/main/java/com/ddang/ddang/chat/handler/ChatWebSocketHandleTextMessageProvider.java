@@ -95,6 +95,7 @@ public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTe
 
         final List<SendMessageDto> sendMessageDtos = new ArrayList<>();
         for (final WebSocketSession currentSession : groupSessions) {
+            currentSession.isOpen();
             final TextMessage textMessage = createTextMessage(message, writerId, currentSession);
             sendMessageDtos.add(new SendMessageDto(currentSession, textMessage));
             updateReadMessageLog(currentSession, chatRoomId, message);

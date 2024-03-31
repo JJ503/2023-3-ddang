@@ -5,6 +5,7 @@ import com.ddang.ddang.authentication.configuration.exception.UserUnauthorizedEx
 import com.ddang.ddang.authentication.domain.dto.AuthenticationUserInfo;
 import com.ddang.ddang.image.presentation.util.ImageRelativeUrl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -14,6 +15,7 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class WebSocketInterceptor extends HttpSessionHandshakeInterceptor {
@@ -29,6 +31,7 @@ public class WebSocketInterceptor extends HttpSessionHandshakeInterceptor {
     ) throws Exception {
         attributes.put("userId", findUserId(request));
         attributes.put("baseUrl", ImageRelativeUrl.USER.calculateAbsoluteUrl());
+        log.info("handshake user id: {}", findUserId(request));
 
         return super.beforeHandshake(request, response, wsHandler, attributes);
     }

@@ -58,7 +58,7 @@ class WebSocketHandlerTest extends WebSocketHandlerTestFixture {
     }
 
     @Test
-    void 웹소켓_통신이_종료되면_해당_세션의_타입에_따라_해당하는_provider를_통해_세션을_제거한다() {
+    void 웹소켓_통신이_종료되면_해당_세션의_타입에_따라_해당하는_provider를_통해_세션을_제거한다() throws Exception {
         // given
         given(providerComposite.findProvider(TextMessageType.CHATTINGS)).willReturn(provider);
         given(session.getAttributes()).willReturn(세션_attribute_정보);
