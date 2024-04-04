@@ -20,7 +20,6 @@ import com.ddangddangddang.android.global.DdangDdangDdang
 import com.ddangddangddang.android.model.ReportInfo
 import com.ddangddangddang.android.notification.cancelActiveNotification
 import com.ddangddangddang.android.notification.type.MessageType
-import com.ddangddangddang.android.reciever.MessageReceiver
 import com.ddangddangddang.android.reciever.NetworkReceiver
 import com.ddangddangddang.android.util.binding.BindingActivity
 import com.ddangddangddang.android.util.view.showSnackbar
@@ -49,13 +48,6 @@ class MessageRoomActivity :
 
     private val adapter by lazy { ConcatAdapter(roomCreatedNotifyAdapter, messageAdapter) }
 
-    private val messageReceiver: MessageReceiver by lazy {
-        MessageReceiver { messageRoomId ->
-            if (messageRoomId == viewModel.messageRoomInfo.value?.roomId) {
-                viewModel.loadMessages()
-            }
-        }
-    }
     private val roomId: Long by lazy { intent.getLongExtra(ROOM_ID_KEY, -1L) }
 
     private val connectivityManager: ConnectivityManager by lazy {
@@ -64,13 +56,8 @@ class MessageRoomActivity :
 
     private val networkReceiver: NetworkReceiver by lazy {
         NetworkReceiver(
-            onConnected = {
-                viewModel.loadMessages()
-                viewModel.isConnected = true
-            },
-            onLost = {
-                viewModel.isConnected = false
-            },
+            onConnected = { viewModel.isConnected = true },
+            onLost = { viewModel.isConnected = false },
         )
     }
 
@@ -157,15 +144,13 @@ class MessageRoomActivity :
     override fun onResume() {
         super.onResume()
         (application as DdangDdangDdang).activeMessageRoomId = roomId
-        registerReceiver(messageReceiver, MessageReceiver.getIntentFilter())
         connectivityManager.registerDefaultNetworkCallback(networkReceiver)
-        if (viewModel.messageRoomInfo.value != null) viewModel.loadMessages()
+        if (viewModel.messageRoomInfo.value != null) viewModel.sendPing()
     }
 
     override fun onPause() {
         super.onPause()
         (application as DdangDdangDdang).activeMessageRoomId = null
-        unregisterReceiver(messageReceiver)
         connectivityManager.unregisterNetworkCallback(networkReceiver)
         cancelNotification()
     }

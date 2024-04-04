@@ -16,7 +16,6 @@ import com.ddangddangddang.data.remote.callAdapter.ApiResponse
 import com.ddangddangddang.data.repository.ChatRepository
 import com.ddangddangddang.data.repository.RealTimeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,7 +24,16 @@ class MessageRoomViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val realTimeRepository: RealTimeRepository,
 ) : ViewModel() {
+    private var isPing = false
     var isConnected = false
+        set(value) {
+            if (!value) {
+                isPing = false
+            } else {
+                sendPing()
+            }
+            field = value
+        }
     val inputMessage: MutableLiveData<String> = MutableLiveData("")
 
     private val _event: SingleLiveEvent<MessageRoomEvent> = SingleLiveEvent()
@@ -42,7 +50,6 @@ class MessageRoomViewModel @Inject constructor(
     private val lastMessageId: Long?
         get() = _messages.value?.lastOrNull()?.id
 
-    private var isMessageLoading: Boolean = false
     private var isSubmitLoading: Boolean = false
 
     init {
@@ -71,7 +78,7 @@ class MessageRoomViewModel @Inject constructor(
             when (val response = chatRepository.getChatRoom(roomId)) {
                 is ApiResponse.Success -> {
                     _messageRoomInfo.value = response.body.toPresentation()
-                    loadMessages()
+                    sendPing()
                 }
 
                 is ApiResponse.Failure -> {
@@ -87,36 +94,6 @@ class MessageRoomViewModel @Inject constructor(
                 is ApiResponse.Unexpected -> {
                     _event.value = MessageRoomEvent.FailureEvent.LoadRoomInfo(ErrorType.UNEXPECTED)
                 }
-            }
-        }
-    }
-
-    fun loadMessages() {
-        _messageRoomInfo.value?.let {
-            if (isMessageLoading) return
-            isMessageLoading = true
-            viewModelScope.launch {
-                when (val response = chatRepository.getMessages(it.roomId, lastMessageId)) {
-                    is ApiResponse.Success -> {
-                        addMessages(response.body.map { it.toPresentation() }.toViewItems())
-                    }
-
-                    is ApiResponse.Failure -> {
-                        _event.value =
-                            MessageRoomEvent.FailureEvent.LoadMessages(ErrorType.FAILURE(response.error))
-                    }
-
-                    is ApiResponse.NetworkError -> {
-                        _event.value =
-                            MessageRoomEvent.FailureEvent.LoadMessages(ErrorType.NETWORK_ERROR)
-                    }
-
-                    is ApiResponse.Unexpected -> {
-                        _event.value =
-                            MessageRoomEvent.FailureEvent.LoadMessages(ErrorType.UNEXPECTED)
-                    }
-                }
-                isMessageLoading = false
             }
         }
     }
@@ -146,39 +123,76 @@ class MessageRoomViewModel @Inject constructor(
     }
 
     fun sendMessage() {
-        _messageRoomInfo.value?.let {
-            val message = inputMessage.value
-            if (message.isNullOrEmpty()) return
-            if (isSubmitLoading || !isConnected) return
-            isSubmitLoading = true
-            val request = WebSocketRequest.WebSocketDataRequest.ChatMessageDataRequest(
-                it.roomId,
-                it.messagePartnerId,
-                message,
-            )
+        viewModelScope.launch {
+            _messageRoomInfo.value?.let {
+                val message = inputMessage.value
+                if (message.isNullOrEmpty()) return@launch
+                if (isSubmitLoading || !isConnected) return@launch
+                if (!isPing) {
+                    sendPing()
+                    if (!isPing) return@launch
+                }
+                isSubmitLoading = true
+                val data = WebSocketRequest.WebSocketDataRequest.ChatMessageDataRequest(
+                    it.roomId,
+                    it.messagePartnerId,
+                    message,
+                )
 
-            val response = realTimeRepository.sendMessage(request)
-            if (response) {
-                inputMessage.value = ""
+                val response = realTimeRepository.send(WebSocketRequest.ChatRequest(data))
+                when (response.status) {
+                    "SUCCESS" -> {
+                        inputMessage.value = ""
+                    }
+
+                    "DISCONNECTED" -> {
+                        Log.d("WS", "DISCONNECTED")
+                    }
+
+                    "FORBIDDEN" -> {
+                        Log.d("WS", "FORBIDDEN")
+                        // 방 권한 없음을 알리고, 나가기 처리 해야함.
+                    }
+                }
+                isSubmitLoading = false
             }
-            isSubmitLoading = false
         }
     }
 
-    private suspend fun sendPing() {
-        _messageRoomInfo.value?.let {
-            if (isSubmitLoading) return
-            isSubmitLoading = true
-            delay(7000L)
+    fun sendPing() {
+        viewModelScope.launch {
+            _messageRoomInfo.value?.let {
+                if (isSubmitLoading) return@launch
+                isSubmitLoading = true
 
-            val request = WebSocketRequest.WebSocketDataRequest.ChatMessageDataRequest(
-                it.roomId,
-                it.messagePartnerId,
-                "PING!",
-            )
+                val data = WebSocketRequest.WebSocketDataRequest.ChatPingDataRequest(
+                    it.roomId,
+                    lastMessageId,
+                )
 
-            val response = realTimeRepository.sendMessage(request)
-            isSubmitLoading = false
+                val response = realTimeRepository.send(WebSocketRequest.ChatRequest(data))
+                when (response.status) {
+                    "SUCCESS" -> {
+                        isPing = true
+                        addMessages(
+                            response.messages.map { message -> message.toPresentation() }
+                                .toViewItems(),
+                        )
+                    }
+
+                    "DISCONNECTED" -> {
+                        Log.d("WS", "DISCONNECTED")
+                        isPing = false
+                    }
+
+                    "FORBIDDEN" -> {
+                        Log.d("WS", "FORBIDDEN")
+                        isPing = false
+                        // 방 권한 없음을 알리고, 나가기 처리 해야함.
+                    }
+                }
+                isSubmitLoading = false
+            }
         }
     }
 
