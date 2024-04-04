@@ -2,6 +2,7 @@ package com.ddangddangddang.android.feature.messageRoom
 
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.recyclerview.widget.ConcatAdapter
@@ -20,6 +21,7 @@ import com.ddangddangddang.android.model.ReportInfo
 import com.ddangddangddang.android.notification.cancelActiveNotification
 import com.ddangddangddang.android.notification.type.MessageType
 import com.ddangddangddang.android.reciever.MessageReceiver
+import com.ddangddangddang.android.reciever.NetworkReceiver
 import com.ddangddangddang.android.util.binding.BindingActivity
 import com.ddangddangddang.android.util.view.showSnackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -55,6 +57,22 @@ class MessageRoomActivity :
         }
     }
     private val roomId: Long by lazy { intent.getLongExtra(ROOM_ID_KEY, -1L) }
+
+    private val connectivityManager: ConnectivityManager by lazy {
+        getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+    }
+
+    private val networkReceiver: NetworkReceiver by lazy {
+        NetworkReceiver(
+            onConnected = {
+                viewModel.loadMessages()
+                viewModel.isConnected = true
+            },
+            onLost = {
+                viewModel.isConnected = false
+            },
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,6 +158,7 @@ class MessageRoomActivity :
         super.onResume()
         (application as DdangDdangDdang).activeMessageRoomId = roomId
         registerReceiver(messageReceiver, MessageReceiver.getIntentFilter())
+        connectivityManager.registerDefaultNetworkCallback(networkReceiver)
         if (viewModel.messageRoomInfo.value != null) viewModel.loadMessages()
     }
 
@@ -147,6 +166,7 @@ class MessageRoomActivity :
         super.onPause()
         (application as DdangDdangDdang).activeMessageRoomId = null
         unregisterReceiver(messageReceiver)
+        connectivityManager.unregisterNetworkCallback(networkReceiver)
         cancelNotification()
     }
 

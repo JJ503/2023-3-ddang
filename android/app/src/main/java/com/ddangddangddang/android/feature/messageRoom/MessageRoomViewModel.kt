@@ -16,8 +16,8 @@ import com.ddangddangddang.data.remote.callAdapter.ApiResponse
 import com.ddangddangddang.data.repository.ChatRepository
 import com.ddangddangddang.data.repository.RealTimeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,6 +25,7 @@ class MessageRoomViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val realTimeRepository: RealTimeRepository,
 ) : ViewModel() {
+    var isConnected = false
     val inputMessage: MutableLiveData<String> = MutableLiveData("")
 
     private val _event: SingleLiveEvent<MessageRoomEvent> = SingleLiveEvent()
@@ -41,8 +42,8 @@ class MessageRoomViewModel @Inject constructor(
     private val lastMessageId: Long?
         get() = _messages.value?.lastOrNull()?.id
 
-    private val isMessageLoading = AtomicBoolean(false)
-    private val isSubmitLoading = AtomicBoolean(false)
+    private var isMessageLoading: Boolean = false
+    private var isSubmitLoading: Boolean = false
 
     init {
         observeChatMessage()
@@ -92,8 +93,8 @@ class MessageRoomViewModel @Inject constructor(
 
     fun loadMessages() {
         _messageRoomInfo.value?.let {
-            if (isMessageLoading.getAndSet(true)) return
-
+            if (isMessageLoading) return
+            isMessageLoading = true
             viewModelScope.launch {
                 when (val response = chatRepository.getMessages(it.roomId, lastMessageId)) {
                     is ApiResponse.Success -> {
@@ -115,7 +116,7 @@ class MessageRoomViewModel @Inject constructor(
                             MessageRoomEvent.FailureEvent.LoadMessages(ErrorType.UNEXPECTED)
                     }
                 }
-                isMessageLoading.set(false)
+                isMessageLoading = false
             }
         }
     }
@@ -148,8 +149,8 @@ class MessageRoomViewModel @Inject constructor(
         _messageRoomInfo.value?.let {
             val message = inputMessage.value
             if (message.isNullOrEmpty()) return
-            if (isSubmitLoading.getAndSet(true)) return
-
+            if (isSubmitLoading || !isConnected) return
+            isSubmitLoading = true
             val request = WebSocketRequest.WebSocketDataRequest.ChatMessageDataRequest(
                 it.roomId,
                 it.messagePartnerId,
@@ -160,7 +161,24 @@ class MessageRoomViewModel @Inject constructor(
             if (response) {
                 inputMessage.value = ""
             }
-            isSubmitLoading.set(false)
+            isSubmitLoading = false
+        }
+    }
+
+    private suspend fun sendPing() {
+        _messageRoomInfo.value?.let {
+            if (isSubmitLoading) return
+            isSubmitLoading = true
+            delay(7000L)
+
+            val request = WebSocketRequest.WebSocketDataRequest.ChatMessageDataRequest(
+                it.roomId,
+                it.messagePartnerId,
+                "PING!",
+            )
+
+            val response = realTimeRepository.sendMessage(request)
+            isSubmitLoading = false
         }
     }
 
