@@ -8,7 +8,7 @@ public enum ChattingType {
     PING("ping"),
     ;
 
-    private String value;
+    private final String value;
 
     ChattingType(final String value) {
         this.value = value;

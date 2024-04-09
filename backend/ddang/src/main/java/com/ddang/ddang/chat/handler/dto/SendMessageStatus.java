@@ -4,6 +4,5 @@ public enum SendMessageStatus {
 
     SUCCESS,
     DISCONNECTED,
-    FORBIDDEN,
-    ;
+    FORBIDDEN
 }
