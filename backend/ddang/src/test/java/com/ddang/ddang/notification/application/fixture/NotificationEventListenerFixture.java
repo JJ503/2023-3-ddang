@@ -121,6 +121,7 @@ public class NotificationEventListenerFixture {
                 "baseUrl", 이미지_절대_경로
         ));
         메시지_전송_데이터 = Map.of(
+                "type", "message",
                 "chatRoomId", String.valueOf(채팅방.getId()),
                 "receiverId", String.valueOf(수신자_겸_기존_입찰자.getId()),
                 "contents", "메시지 내용"
