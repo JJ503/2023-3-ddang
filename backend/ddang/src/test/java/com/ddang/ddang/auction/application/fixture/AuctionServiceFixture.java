@@ -42,8 +42,8 @@ public class AuctionServiceFixture {
     @Autowired
     private BidRepository bidRepository;
 
-    private Category 가구_카테고리 = new Category("가구");
-    private Category 가구_서브_의자_카테고리 = new Category("의자");
+    protected Category 가구_카테고리 = new Category("가구");
+    protected Category 가구_서브_의자_카테고리 = new Category("의자");
 
     protected User 판매자 = User.builder()
                              .name("판매자")
@@ -58,7 +58,7 @@ public class AuctionServiceFixture {
                               .oauthId("54321")
                               .build();
 
-    private MockMultipartFile 경매_이미지_파일 = new MockMultipartFile(
+    protected MockMultipartFile 경매_이미지_파일 = new MockMultipartFile(
             "image.png",
             "image.png",
             MediaType.IMAGE_PNG.toString(),
@@ -85,19 +85,24 @@ public class AuctionServiceFixture {
     protected Auction 구매자가_입찰한_경매2;
     protected Auction 종료된_경매;
     private BidPrice 구매자가_입찰한_경매2_입찰_가격 = new BidPrice(10_000);
-    private Bid 구매자가_입찰한_경매1_입찰;
+    protected Bid 구매자가_입찰한_경매1_입찰;
     private Bid 구매자가_입찰한_경매2_입찰;
+
+    protected Region 강남구;
+    protected Region 역삼동;
 
     @BeforeEach
     void setUp() {
         final Region 서울특별시 = new Region("서울특별시");
-        final Region 강남구 = new Region("강남구");
-        final Region 역삼동 = new Region("역삼동");
+        강남구 = new Region("강남구");
+        역삼동 = new Region("역삼동");
 
         서울특별시.addSecondRegion(강남구);
         강남구.addThirdRegion(역삼동);
 
         regionRepository.save(서울특별시);
+        regionRepository.save(강남구);
+        regionRepository.save(역삼동);
 
         가구_카테고리.addSubCategory(가구_서브_의자_카테고리);
 
