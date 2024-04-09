@@ -1,7 +1,6 @@
 package com.ddangddangddang.data.remote.scarlet
 
 import com.ddangddangddang.data.model.request.WebSocketRequest
-import com.ddangddangddang.data.model.response.ChatMessageResponse
 import com.ddangddangddang.data.model.response.ChatWebSocketResponse
 import com.tinder.scarlet.WebSocket
 import com.tinder.scarlet.ws.Receive
@@ -10,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 interface WebSocketService {
     @Send
-    fun send(data: WebSocketRequest): ChatWebSocketResponse
+    fun send(data: WebSocketRequest): Boolean
 
     @Receive
-    fun observeChatMessage(): Flow<ChatMessageResponse>
+    fun observeChatMessage(): Flow<ChatWebSocketResponse>
 
     @Receive
     fun observeWebSocketEvent(): Flow<WebSocket.Event>

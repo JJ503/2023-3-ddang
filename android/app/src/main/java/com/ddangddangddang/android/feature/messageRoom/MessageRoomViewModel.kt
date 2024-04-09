@@ -60,7 +60,23 @@ class MessageRoomViewModel @Inject constructor(
     private fun observeChatMessage() {
         viewModelScope.launch {
             realTimeRepository.observeChatMessage().collect {
-                addMessages(listOf(it.toPresentation()).toViewItems())
+                when (it.status) {
+                    "SUCCESS" -> {
+                        isPing = true
+                        addMessages(it.messages.map { it.toPresentation() }.toViewItems())
+                    }
+
+                    "DISCONNECTED" -> {
+                        Log.d("WS", "DISCONNECTED")
+                        isPing = false
+                    }
+
+                    "FORBIDDEN" -> {
+                        Log.d("WS", "FORBIDDEN")
+                        isPing = false
+                        // 방 권한 없음을 알리고, 나가기 처리 해야함.
+                    }
+                }
             }
         }
     }
@@ -140,19 +156,8 @@ class MessageRoomViewModel @Inject constructor(
                 )
 
                 val response = realTimeRepository.send(WebSocketRequest.ChatRequest(data))
-                when (response.status) {
-                    "SUCCESS" -> {
-                        inputMessage.value = ""
-                    }
-
-                    "DISCONNECTED" -> {
-                        Log.d("WS", "DISCONNECTED")
-                    }
-
-                    "FORBIDDEN" -> {
-                        Log.d("WS", "FORBIDDEN")
-                        // 방 권한 없음을 알리고, 나가기 처리 해야함.
-                    }
+                if (response) {
+                    inputMessage.value = ""
                 }
                 isSubmitLoading = false
             }
@@ -170,27 +175,7 @@ class MessageRoomViewModel @Inject constructor(
                     lastMessageId,
                 )
 
-                val response = realTimeRepository.send(WebSocketRequest.ChatRequest(data))
-                when (response.status) {
-                    "SUCCESS" -> {
-                        isPing = true
-                        addMessages(
-                            response.messages.map { message -> message.toPresentation() }
-                                .toViewItems(),
-                        )
-                    }
-
-                    "DISCONNECTED" -> {
-                        Log.d("WS", "DISCONNECTED")
-                        isPing = false
-                    }
-
-                    "FORBIDDEN" -> {
-                        Log.d("WS", "FORBIDDEN")
-                        isPing = false
-                        // 방 권한 없음을 알리고, 나가기 처리 해야함.
-                    }
-                }
+                realTimeRepository.send(WebSocketRequest.ChatRequest(data))
                 isSubmitLoading = false
             }
         }
