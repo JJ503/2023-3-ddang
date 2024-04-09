@@ -16,16 +16,22 @@ import com.ddang.ddang.websocket.handler.dto.TextMessageType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.PingMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTextMessageProvider {
@@ -136,6 +142,38 @@ public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTe
 
     @Override
     public void remove(final WebSocketSession session) {
+        log.info("{} 연결 종료", session);
         sessions.remove(session);
+    }
+
+    @Scheduled(fixedDelay = 6000)
+    public void sendPingSessions() {
+        final Set<WebSocketSession> setStream = sessions.getChatRoomSessions()
+                                                        .values()
+                                                        .stream()
+                                                        .flatMap(webSocketSessions -> webSocketSessions.getSessions()
+                                                                                                       .stream()
+                                                        )
+                                                        .collect(Collectors.toSet());
+
+        log.info("현재 세션 리스트 : {}", setStream);
+
+        setStream.parallelStream()
+                 .forEach(session -> {
+                     final Map<String, Object> attributes = session.getAttributes();
+                     final boolean pingStatus = (boolean) attributes.get("ping status");
+                     if (!pingStatus) {
+                         sessions.remove(session);
+                     }
+
+                     attributes.put("ping status", false);
+                     try {
+                         session.sendMessage(new PingMessage());
+                         log.info("ping 보내기 성공 : {} ", session);
+                     } catch (IOException e) {
+                         log.error("ping 보내기 실패 : {} ", session);
+                         throw new RuntimeException(e);
+                     }
+                 });
     }
 }

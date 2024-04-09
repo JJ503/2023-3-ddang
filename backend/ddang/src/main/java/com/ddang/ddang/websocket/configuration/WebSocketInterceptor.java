@@ -29,6 +29,7 @@ public class WebSocketInterceptor extends HttpSessionHandshakeInterceptor {
     ) throws Exception {
         attributes.put("userId", findUserId(request));
         attributes.put("baseUrl", ImageRelativeUrl.USER.calculateAbsoluteUrl());
+        attributes.put("ping status", true);
 
         return super.beforeHandshake(request, response, wsHandler, attributes);
     }

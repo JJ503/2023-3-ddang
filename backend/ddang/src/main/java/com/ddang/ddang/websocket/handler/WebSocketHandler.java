@@ -5,14 +5,18 @@ import com.ddang.ddang.websocket.handler.dto.TextMessageDto;
 import com.ddang.ddang.websocket.handler.dto.TextMessageType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
@@ -42,5 +46,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
         final TextMessageType textMessageType = TextMessageType.valueOf(type);
         final WebSocketHandleTextMessageProvider provider = providerComposite.findProvider(textMessageType);
         provider.remove(session);
+    }
+
+    @Override
+    public void handlePongMessage(WebSocketSession session, PongMessage message) throws Exception {
+        log.info("pong 수신 : {} ", session);
+        final Map<String, Object> attributes = session.getAttributes();
+        attributes.put("ping status", true);
     }
 }
