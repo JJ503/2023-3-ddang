@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTextMessageProvider {
 
     private static final String CHATROOM_ID_KEY = "chatRoomId";
+    private static final String CHATTTING_TYPE_KEY = "type";
 
     private final WebSocketChatSessions sessions;
     private final ObjectMapper objectMapper;
@@ -64,7 +65,7 @@ public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTe
         final long chatRoomId = getChatRoomId(data);
         sessions.add(session, chatRoomId);
 
-        final ChattingType type = ChattingType.findValue(data);
+        final ChattingType type = ChattingType.findValue(data.get(CHATTTING_TYPE_KEY));
         if (ChattingType.PING == type) {
             return createPingResponse(sessionAttribute, data, session);
         }
