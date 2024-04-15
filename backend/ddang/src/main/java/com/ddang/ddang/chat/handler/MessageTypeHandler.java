@@ -7,7 +7,7 @@ import com.ddang.ddang.chat.application.event.UpdateReadMessageLogEvent;
 import com.ddang.ddang.chat.domain.Message;
 import com.ddang.ddang.chat.domain.WebSocketChatSessions;
 import com.ddang.ddang.chat.handler.dto.ChatMessageDataDto;
-import com.ddang.ddang.chat.handler.dto.HandleMessageResponse;
+import com.ddang.ddang.chat.handler.dto.SendChatResponse;
 import com.ddang.ddang.chat.handler.dto.MessageDto;
 import com.ddang.ddang.chat.handler.dto.SendMessageStatus;
 import com.ddang.ddang.chat.presentation.dto.request.CreateMessageRequest;
@@ -122,12 +122,12 @@ public class MessageTypeHandler implements ChatHandleProvider {
     }
 
     private TextMessage createTextMessage(final MessageDto messageDto) throws JsonProcessingException {
-        final HandleMessageResponse handleMessageResponse = new HandleMessageResponse(
+        final SendChatResponse sendChatResponse = new SendChatResponse(
                 SendMessageStatus.SUCCESS,
                 List.of(messageDto)
         );
 
-        return new TextMessage(objectMapper.writeValueAsString(handleMessageResponse));
+        return new TextMessage(objectMapper.writeValueAsString(sendChatResponse));
     }
 
     private void updateReadMessageLog(
