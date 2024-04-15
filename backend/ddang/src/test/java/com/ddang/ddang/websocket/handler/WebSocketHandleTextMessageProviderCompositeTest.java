@@ -21,9 +21,6 @@ class WebSocketHandleTextMessageProviderCompositeTest {
         // given
         final ChatWebSocketHandleTextMessageProvider provider = new ChatWebSocketHandleTextMessageProvider(
                 null,
-                null,
-                null,
-                null,
                 null
         );
         final WebSocketHandleTextMessageProviderComposite composite =
