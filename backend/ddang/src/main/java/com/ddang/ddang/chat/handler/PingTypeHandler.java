@@ -2,9 +2,12 @@ package com.ddang.ddang.chat.handler;
 
 import com.ddang.ddang.chat.application.MessageService;
 import com.ddang.ddang.chat.application.dto.ReadMessageDto;
+import com.ddang.ddang.chat.domain.WebSocketChatSessions;
+import com.ddang.ddang.chat.domain.WebSocketSessions;
 import com.ddang.ddang.chat.handler.dto.ChatPingDto;
-import com.ddang.ddang.chat.handler.dto.SendChatResponse;
 import com.ddang.ddang.chat.handler.dto.MessageDto;
+import com.ddang.ddang.chat.handler.dto.PingDataDto;
+import com.ddang.ddang.chat.handler.dto.SendChatResponse;
 import com.ddang.ddang.chat.handler.dto.SendMessageStatus;
 import com.ddang.ddang.chat.presentation.dto.request.ReadMessageRequest;
 import com.ddang.ddang.websocket.handler.dto.ChatMessageType;
@@ -19,11 +22,13 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Component
 @RequiredArgsConstructor
 public class PingTypeHandler implements ChatHandleProvider {
 
+    private final WebSocketChatSessions sessions;
     private final ObjectMapper objectMapper;
     private final MessageService messageService;
 
@@ -34,35 +39,29 @@ public class PingTypeHandler implements ChatHandleProvider {
 
     @Override
     public List<SendMessageDto> createResponse(
-            final WebSocketSession session,
+            final SessionAttributeDto sessionAttributeDto,
             final Map<String, String> chatPingData
     ) throws JsonProcessingException {
-        final ReadMessageRequest readMessageRequest = createReadMessageRequest(session, chatPingData);
+        final PingDataDto pingDataDto = PingDataDto.from(chatPingData);
+        final ReadMessageRequest readMessageRequest = createReadMessageRequest(sessionAttributeDto, pingDataDto);
         final List<ReadMessageDto> readMessageDtos = messageService.readAllByLastMessageId(readMessageRequest);
-        final SendChatResponse sendChatResponse = createSendChatResponse(readMessageDtos, session);
+        final SendChatResponse sendChatResponse = createSendChatResponse(readMessageDtos, sessionAttributeDto);
 
-        return List.of(createSendMessageDto(session, sendChatResponse));
+        return List.of(createSendMessageDto(sessionAttributeDto, pingDataDto, sendChatResponse));
     }
 
     private ReadMessageRequest createReadMessageRequest(
-            final WebSocketSession session,
-            final Map<String, String> chatPingData
+            final SessionAttributeDto sessionAttributeDto,
+            final PingDataDto chatPingData
     ) {
-        final SessionAttributeDto sessionAttribute = convertToSessionAttributes(session);
         final ChatPingDto pingDto = objectMapper.convertValue(chatPingData, ChatPingDto.class);
 
-        return new ReadMessageRequest(sessionAttribute.userId(), pingDto.chatRoomId(), pingDto.lastMessageId());
-    }
-
-    private SessionAttributeDto convertToSessionAttributes(final WebSocketSession session) {
-        final Map<String, Object> attributes = session.getAttributes();
-
-        return objectMapper.convertValue(attributes, SessionAttributeDto.class);
+        return new ReadMessageRequest(sessionAttributeDto.userId(), pingDto.chatRoomId(), pingDto.lastMessageId());
     }
 
     private SendChatResponse createSendChatResponse(
             final List<ReadMessageDto> readMessageDtos,
-            final WebSocketSession session
+            final SessionAttributeDto session
     ) {
         final List<MessageDto> messageDtos = convertToMessageDto(readMessageDtos, session);
 
@@ -71,29 +70,32 @@ public class PingTypeHandler implements ChatHandleProvider {
 
     private List<MessageDto> convertToMessageDto(
             final List<ReadMessageDto> readMessageDtos,
-            final WebSocketSession session
+            final SessionAttributeDto sessionAttributeDto
     ) {
         return readMessageDtos.stream()
-                              .map(readMessageDto -> MessageDto.of(readMessageDto,
-                                                                   isMyMessage(session, readMessageDto.writerId())
-                              ))
-                              .toList();
+                              .map(readMessageDto -> MessageDto.of(readMessageDto, isMyMessage(sessionAttributeDto,
+                                                                                               readMessageDto.writerId()
+                              ))).toList();
     }
 
-    private boolean isMyMessage(
-            final WebSocketSession session, final Long writerId
-    ) {
-        final long userId = Long.parseLong(String.valueOf(session.getAttributes().get("userId")));
+    private boolean isMyMessage(final SessionAttributeDto session, final Long writerId) {
+        final long userId = session.userId();
 
         return writerId.equals(userId);
     }
 
     private SendMessageDto createSendMessageDto(
-            final WebSocketSession session,
+            final SessionAttributeDto sessionAttributeDto,
+            final PingDataDto chatPingData,
             final SendChatResponse sendChatResponse
     ) throws JsonProcessingException {
         final TextMessage textMessage = new TextMessage(objectMapper.writeValueAsString(sendChatResponse));
+        final WebSocketSessions sessions = this.sessions.findSessionsByChatRoomId(chatPingData.chatRoomId());
+        final WebSocketSession userSession = sessions.findByUserId(sessionAttributeDto.userId())
+                                                     .orElseThrow(() -> new NoSuchElementException(
+                                                             "웹소켓에 연결된 사용자가 존재하지 않습니다."
+                                                     ));
 
-        return new SendMessageDto(session, textMessage);
+        return new SendMessageDto(userSession, textMessage);
     }
 }

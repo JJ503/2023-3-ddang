@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,6 +26,12 @@ public class WebSocketSessions {
     public boolean contains(final Long userId) {
         return sessions.stream()
                        .anyMatch(session -> session.getAttributes().get(USER_ID_KEY) == userId);
+    }
+
+    public Optional<WebSocketSession> findByUserId(final long userId) {
+        return sessions.stream()
+                       .filter(session -> session.getAttributes().get(USER_ID_KEY).equals(userId))
+                       .findFirst();
     }
 
     public void remove(final WebSocketSession session) {

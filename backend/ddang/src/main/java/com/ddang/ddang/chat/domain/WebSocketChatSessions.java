@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.ddang.ddang.chat.domain.WebSocketSessions.CHAT_ROOM_ID_KEY;
@@ -22,10 +21,8 @@ public class WebSocketChatSessions {
         webSocketSessions.putIfAbsent(session, chatRoomId);
     }
 
-    public Set<WebSocketSession> getSessionsByChatRoomId(final Long chatRoomId) {
-        final WebSocketSessions webSocketSessions = chatRoomSessions.get(chatRoomId);
-
-        return webSocketSessions.getSessions();
+    public WebSocketSessions findSessionsByChatRoomId(final Long chatRoomId) {
+        return chatRoomSessions.get(chatRoomId);
     }
 
     public boolean containsByUserId(final Long chatRoomId, final Long userId) {

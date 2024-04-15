@@ -25,7 +25,6 @@ import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -80,7 +79,9 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
         given(receiverSession.getAttributes()).willReturn(수신자_세션_attribute_정보);
         willDoNothing().given(sessions).add(writerSession, 채팅방.getId());
         willReturn(true).given(sessions).containsByUserId(채팅방.getId(), 수신자.getId());
-        willReturn(Set.of(writerSession, receiverSession)).given(sessions).getSessionsByChatRoomId(채팅방.getId());
+        채팅방에_해당하는_세션.putIfAbsent(writerSession, 채팅방.getId());
+        채팅방에_해당하는_세션.putIfAbsent(receiverSession, 채팅방.getId());
+        willReturn(채팅방에_해당하는_세션).given(sessions).findSessionsByChatRoomId(채팅방.getId());
 
         // when
         final List<SendMessageDto> actual = provider.handleCreateSendMessage(writerSession, 메시지_전송_데이터);
@@ -98,7 +99,9 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
         given(receiverSession.getAttributes()).willReturn(수신자_세션_attribute_정보);
         willDoNothing().given(sessions).add(writerSession, 채팅방.getId());
         willReturn(true).given(sessions).containsByUserId(채팅방.getId(), 수신자.getId());
-        willReturn(Set.of(writerSession, receiverSession)).given(sessions).getSessionsByChatRoomId(채팅방.getId());
+        채팅방에_해당하는_세션.putIfAbsent(writerSession, 채팅방.getId());
+        채팅방에_해당하는_세션.putIfAbsent(receiverSession, 채팅방.getId());
+        willReturn(채팅방에_해당하는_세션).given(sessions).findSessionsByChatRoomId(채팅방.getId());
 
         // when
         provider.handleCreateSendMessage(writerSession, 메시지_전송_데이터);
@@ -116,7 +119,8 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
         given(writerSession.getAttributes()).willReturn(발신자_세션_attribute_정보);
         willDoNothing().given(sessions).add(writerSession, 채팅방.getId());
         willReturn(false).given(sessions).containsByUserId(채팅방.getId(), 수신자.getId());
-        willReturn(Set.of(writerSession)).given(sessions).getSessionsByChatRoomId(채팅방.getId());
+        채팅방에_해당하는_세션.putIfAbsent(writerSession, 채팅방.getId());
+        willReturn(채팅방에_해당하는_세션).given(sessions).findSessionsByChatRoomId(채팅방.getId());
 
         // when
         provider.handleCreateSendMessage(writerSession, 메시지_전송_데이터);
@@ -132,7 +136,8 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
         given(writerSession.getAttributes()).willReturn(발신자_세션_attribute_정보);
         willDoNothing().given(sessions).add(writerSession, 채팅방.getId());
         willReturn(false).given(sessions).containsByUserId(채팅방.getId(), 수신자.getId());
-        willReturn(Set.of(writerSession)).given(sessions).getSessionsByChatRoomId(채팅방.getId());
+        채팅방에_해당하는_세션.putIfAbsent(writerSession, 채팅방.getId());
+        willReturn(채팅방에_해당하는_세션).given(sessions).findSessionsByChatRoomId(채팅방.getId());
 
         // when
         final List<SendMessageDto> actual = provider.handleCreateSendMessage(writerSession, 메시지_전송_데이터);
@@ -147,7 +152,8 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
         given(writerSession.getAttributes()).willReturn(발신자_세션_attribute_정보);
         willDoNothing().given(sessions).add(writerSession, 채팅방.getId());
         willReturn(false).given(sessions).containsByUserId(채팅방.getId(), 수신자.getId());
-        willReturn(Set.of(writerSession)).given(sessions).getSessionsByChatRoomId(채팅방.getId());
+        채팅방에_해당하는_세션.putIfAbsent(writerSession, 채팅방.getId());
+        willReturn(채팅방에_해당하는_세션).given(sessions).findSessionsByChatRoomId(채팅방.getId());
         given(notificationService.send(any(CreateNotificationDto.class))).willReturn(NotificationStatus.SUCCESS);
 
         // when
@@ -164,7 +170,8 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
         given(writerSession.getAttributes()).willReturn(발신자_세션_attribute_정보);
         willDoNothing().given(sessions).add(writerSession, 채팅방.getId());
         willReturn(false).given(sessions).containsByUserId(채팅방.getId(), 수신자.getId());
-        willReturn(Set.of(writerSession)).given(sessions).getSessionsByChatRoomId(채팅방.getId());
+        채팅방에_해당하는_세션.putIfAbsent(writerSession, 채팅방.getId());
+        willReturn(채팅방에_해당하는_세션).given(sessions).findSessionsByChatRoomId(채팅방.getId());
         given(notificationService.send(any(CreateNotificationDto.class))).willReturn(NotificationStatus.FAIL);
 
         // when
@@ -175,16 +182,17 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
     }
 
     @Test
-    void 잘못된_데이터_타입_전달시_예외가_발생한다() throws JsonProcessingException {
+    void 잘못된_데이터_타입_전달시_예외가_발생한다() {
         // given
         given(writerSession.getAttributes()).willReturn(발신자_세션_attribute_정보);
         willDoNothing().given(sessions).add(writerSession, 채팅방.getId());
         willReturn(false).given(sessions).containsByUserId(채팅방.getId(), 수신자.getId());
-        willReturn(Set.of(writerSession)).given(sessions).getSessionsByChatRoomId(채팅방.getId());
+        채팅방에_해당하는_세션.putIfAbsent(writerSession, 채팅방.getId());
+        willReturn(채팅방에_해당하는_세션).given(sessions).findSessionsByChatRoomId(채팅방.getId());
 
         // when
-        assertThatThrownBy(() -> provider.handleCreateSendMessage(writerSession, 잘못된_메시지_전송_데이터))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> provider.handleCreateSendMessage(writerSession, 잘못된_메시지_전송_데이터)).isInstanceOf(
+                IllegalArgumentException.class);
     }
 
     @Test

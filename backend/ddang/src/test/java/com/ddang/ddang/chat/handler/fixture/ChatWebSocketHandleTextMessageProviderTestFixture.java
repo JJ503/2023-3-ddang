@@ -9,6 +9,7 @@ import com.ddang.ddang.category.infrastructure.persistence.JpaCategoryRepository
 import com.ddang.ddang.chat.application.LastReadMessageLogService;
 import com.ddang.ddang.chat.application.event.CreateReadMessageLogEvent;
 import com.ddang.ddang.chat.domain.ChatRoom;
+import com.ddang.ddang.chat.domain.WebSocketSessions;
 import com.ddang.ddang.chat.domain.repository.ChatRoomRepository;
 import com.ddang.ddang.image.domain.ProfileImage;
 import com.ddang.ddang.user.domain.Reliability;
@@ -47,6 +48,7 @@ public class ChatWebSocketHandleTextMessageProviderTestFixture {
     protected Map<String, Object> 수신자_세션_attribute_정보;
     protected Map<String, String> 메시지_전송_데이터;
     protected Map<String, String> 잘못된_메시지_전송_데이터;
+    protected WebSocketSessions 채팅방에_해당하는_세션;
 
     protected CreateReadMessageLogEvent 메시지_로그_생성_이벤트;
 
@@ -89,14 +91,20 @@ public class ChatWebSocketHandleTextMessageProviderTestFixture {
         발신자_세션_attribute_정보 = new HashMap<>(Map.of("userId", 발신자.getId(), "baseUrl", "/images"));
         수신자_세션_attribute_정보 = new HashMap<>(Map.of("userId", 수신자.getId(), "baseUrl", "/images"));
         메시지_전송_데이터 = Map.of(
-                "type", "message",
-                "chatRoomId", String.valueOf(채팅방.getId()),
-                "receiverId", String.valueOf(수신자.getId()),
-                "contents", "메시지 내용"
+                "type",
+                "message",
+                "chatRoomId",
+                String.valueOf(채팅방.getId()),
+                "receiverId",
+                String.valueOf(수신자.getId()),
+                "contents",
+                "메시지 내용"
         );
         잘못된_메시지_전송_데이터 = Map.of("type", "wrong message type");
 
         메시지_로그_생성_이벤트 = new CreateReadMessageLogEvent(채팅방);
+
+        채팅방에_해당하는_세션 = new WebSocketSessions();
     }
 
     protected void 메시지_로그를_생성한다() {
