@@ -122,6 +122,7 @@ class MessageRoomActivity :
         binding.root.showSnackbar(
             message = event.type.message ?: defaultMessage,
             actionMessage = actionMessage,
+            anchorView = binding.llMessageInputBox,
         )
     }
 

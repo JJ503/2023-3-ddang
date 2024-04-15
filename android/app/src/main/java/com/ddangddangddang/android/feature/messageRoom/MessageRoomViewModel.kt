@@ -142,8 +142,12 @@ class MessageRoomViewModel @Inject constructor(
             Log.d("WS - TYPE", "MESSAGE")
             _messageRoomInfo.value?.let {
                 val message = inputMessage.value
-                if (message.isNullOrEmpty()) return@launch
-                if (isSubmitLoading || !isConnected) return@launch
+                if (message.isNullOrEmpty() || isSubmitLoading) return@launch
+                if (!isConnected) {
+                    _event.value =
+                        MessageRoomEvent.FailureEvent.SendMessage(ErrorType.NETWORK_ERROR)
+                    return@launch
+                }
                 if (!isPing) {
                     sendPing()
                     if (!isPing) return@launch
@@ -158,7 +162,11 @@ class MessageRoomViewModel @Inject constructor(
                 val response = realTimeRepository.send(WebSocketRequest.ChatRequest(data))
                 if (response) {
                     inputMessage.value = ""
+                } else {
+                    _event.value =
+                        MessageRoomEvent.FailureEvent.SendMessage(ErrorType.NETWORK_ERROR)
                 }
+
                 isSubmitLoading = false
             }
         }
