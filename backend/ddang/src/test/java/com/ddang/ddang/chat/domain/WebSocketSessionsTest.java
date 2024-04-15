@@ -8,6 +8,8 @@ import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -82,6 +84,19 @@ class WebSocketSessionsTest extends WebSocketSessionsTestFixture {
 
         // then
         assertThat(actual).isFalse();
+    }
+
+    @Test
+    void 유저아이디에_해당하는_웹소켓세션을_반환한다() {
+        // given
+        given(session.getAttributes()).willReturn(세션_attribute_정보);
+        sessions.putIfAbsent(session, 채팅방_아이디);
+
+        // when
+        final Optional<WebSocketSession> actual = sessions.findByUserId(사용자_아이디);
+
+        // then
+        assertThat(actual.get()).isEqualTo(session);
     }
 
     @Test
