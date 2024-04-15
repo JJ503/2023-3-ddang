@@ -15,6 +15,7 @@ import com.ddangddangddang.data.model.request.WebSocketRequest
 import com.ddangddangddang.data.remote.callAdapter.ApiResponse
 import com.ddangddangddang.data.repository.ChatRepository
 import com.ddangddangddang.data.repository.RealTimeRepository
+import com.tinder.scarlet.WebSocket
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,11 +28,7 @@ class MessageRoomViewModel @Inject constructor(
     private var isPing = false
     var isConnected = false
         set(value) {
-            if (!value) {
-                isPing = false
-            } else {
-                sendPing()
-            }
+            if (!value) isPing = false
             field = value
         }
     val inputMessage: MutableLiveData<String> = MutableLiveData("")
@@ -60,7 +57,7 @@ class MessageRoomViewModel @Inject constructor(
     private fun observeChatMessage() {
         viewModelScope.launch {
             realTimeRepository.observeChatMessage().collect {
-                when (it.status) {
+                when (it.sendMessageStatus) {
                     "SUCCESS" -> {
                         isPing = true
                         addMessages(it.messages.map { it.toPresentation() }.toViewItems())
@@ -85,6 +82,9 @@ class MessageRoomViewModel @Inject constructor(
         viewModelScope.launch {
             realTimeRepository.observeWebSocketEvent().collect {
                 Log.d("WS", it.toString())
+                if (it is WebSocket.Event.OnConnectionOpened<Any>) {
+                    sendPing()
+                }
             }
         }
     }
@@ -94,7 +94,6 @@ class MessageRoomViewModel @Inject constructor(
             when (val response = chatRepository.getChatRoom(roomId)) {
                 is ApiResponse.Success -> {
                     _messageRoomInfo.value = response.body.toPresentation()
-                    sendPing()
                 }
 
                 is ApiResponse.Failure -> {
@@ -140,6 +139,7 @@ class MessageRoomViewModel @Inject constructor(
 
     fun sendMessage() {
         viewModelScope.launch {
+            Log.d("WS - TYPE", "MESSAGE")
             _messageRoomInfo.value?.let {
                 val message = inputMessage.value
                 if (message.isNullOrEmpty()) return@launch
@@ -164,7 +164,7 @@ class MessageRoomViewModel @Inject constructor(
         }
     }
 
-    fun sendPing() {
+    private fun sendPing() {
         viewModelScope.launch {
             _messageRoomInfo.value?.let {
                 if (isSubmitLoading) return@launch
@@ -175,7 +175,12 @@ class MessageRoomViewModel @Inject constructor(
                     lastMessageId,
                 )
 
-                realTimeRepository.send(WebSocketRequest.ChatRequest(data))
+                if (realTimeRepository.send(WebSocketRequest.ChatRequest(data))) {
+                    Log.d("WS - TYPE", "PING - SUCCESS")
+                } else {
+                    Log.d("WS - TYPE", "PING - FAILED")
+                }
+
                 isSubmitLoading = false
             }
         }

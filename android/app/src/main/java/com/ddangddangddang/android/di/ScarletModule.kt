@@ -22,7 +22,7 @@ object ScarletModule {
     @Provides
     fun provideApplicationForegroundLifecycle(
         application: Application,
-    ): Lifecycle = MessageRoomActivityResumedLifecycle(application, LifecycleRegistry(1000L))
+    ): Lifecycle = MessageRoomActivityResumedLifecycle(application, LifecycleRegistry())
 
     @Singleton
     @Provides

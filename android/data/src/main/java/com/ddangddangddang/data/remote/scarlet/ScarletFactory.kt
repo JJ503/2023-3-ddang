@@ -11,7 +11,7 @@ class ScarletFactory {
 
     companion object {
         private const val BASE_DURATION = 1000L
-        private const val MAX_DURATION = 10000L
+        private const val MAX_DURATION = 4000L
 
         fun createInstance(
             serverURL: String,

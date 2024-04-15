@@ -1,6 +1,6 @@
 package com.ddangddangddang.data.model.response
 
 data class ChatWebSocketResponse(
-    val status: String,
+    val sendMessageStatus: String,
     val messages: List<ChatMessageResponse>,
 )

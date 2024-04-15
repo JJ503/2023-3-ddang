@@ -4,7 +4,7 @@ sealed class WebSocketRequest(val type: String, open val data: WebSocketDataRequ
 
     data class ChatRequest(
         override val data: WebSocketDataRequest,
-    ) : WebSocketRequest("chattings", data)
+    ) : WebSocketRequest("CHATTINGS", data)
 
     sealed class WebSocketDataRequest(val type: String) {
         data class ChatPingDataRequest(

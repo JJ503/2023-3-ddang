@@ -145,7 +145,6 @@ class MessageRoomActivity :
         super.onResume()
         (application as DdangDdangDdang).activeMessageRoomId = roomId
         connectivityManager.registerDefaultNetworkCallback(networkReceiver)
-        if (viewModel.messageRoomInfo.value != null) viewModel.sendPing()
     }
 
     override fun onPause() {
