@@ -53,17 +53,17 @@ public class ChatWebSocketHandleTextMessageProviderTestFixture {
     @BeforeEach
     void setUpFixture() {
         발신자 = User.builder()
-                .name("발신자")
-                .profileImage(new ProfileImage("upload.png", "store.png"))
-                .reliability(new Reliability(4.7d))
-                .oauthId("12345")
-                .build();
+                  .name("발신자")
+                  .profileImage(new ProfileImage("upload.png", "store.png"))
+                  .reliability(new Reliability(4.7d))
+                  .oauthId("12345")
+                  .build();
         수신자 = User.builder()
-                .name("수신자")
-                .profileImage(new ProfileImage("upload.png", "store.png"))
-                .reliability(new Reliability(4.7d))
-                .oauthId("12346")
-                .build();
+                  .name("수신자")
+                  .profileImage(new ProfileImage("upload.png", "store.png"))
+                  .reliability(new Reliability(4.7d))
+                  .oauthId("12346")
+                  .build();
         userRepository.save(발신자);
         userRepository.save(수신자);
 
@@ -73,13 +73,13 @@ public class ChatWebSocketHandleTextMessageProviderTestFixture {
         categoryRepository.save(전자기기);
 
         final Auction 경매 = Auction.builder()
-                .title("경매")
-                .seller(수신자)
-                .description("description")
-                .bidUnit(new BidUnit(1_000))
-                .startPrice(new Price(10_000))
-                .closingTime(LocalDateTime.now().plusDays(3L))
-                .build();
+                                  .title("경매")
+                                  .seller(수신자)
+                                  .description("description")
+                                  .bidUnit(new BidUnit(1_000))
+                                  .startPrice(new Price(10_000))
+                                  .closingTime(LocalDateTime.now().plusDays(3L))
+                                  .build();
         auctionRepository.save(경매);
 
         채팅방 = new ChatRoom(경매, 발신자);
@@ -94,9 +94,7 @@ public class ChatWebSocketHandleTextMessageProviderTestFixture {
                 "receiverId", String.valueOf(수신자.getId()),
                 "contents", "메시지 내용"
         );
-        잘못된_메시지_전송_데이터 = Map.of(
-                "type", "wrong message type"
-        );
+        잘못된_메시지_전송_데이터 = Map.of("type", "wrong message type");
 
         메시지_로그_생성_이벤트 = new CreateReadMessageLogEvent(채팅방);
     }

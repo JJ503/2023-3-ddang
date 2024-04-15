@@ -66,33 +66,55 @@ public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTe
         return createSendMessageResponse(data, sessionAttribute);
     }
 
-    private long getChatRoomId(final Map<String, String> data) {
-        return Long.parseLong(data.get(CHATROOM_ID_KEY));
-    }
-
     private SessionAttributeDto getSessionAttributes(final WebSocketSession session) {
         final Map<String, Object> attributes = session.getAttributes();
 
         return objectMapper.convertValue(attributes, SessionAttributeDto.class);
     }
 
-    private List<SendMessageDto> createPingResponse(final SessionAttributeDto sessionAttribute, final Map<String, String> data, final WebSocketSession userSession) throws JsonProcessingException {
+    private long getChatRoomId(final Map<String, String> data) {
+        return Long.parseLong(data.get(CHATROOM_ID_KEY));
+    }
+
+    private List<SendMessageDto> createPingResponse(
+            final SessionAttributeDto sessionAttribute,
+            final Map<String, String> data,
+            final WebSocketSession userSession
+    ) throws JsonProcessingException {
         final ChatPingDataDto pingData = objectMapper.convertValue(data, ChatPingDataDto.class);
-        final ReadMessageRequest readMessageRequest = new ReadMessageRequest(sessionAttribute.userId(), pingData.chatRoomId(), pingData.lastMessageId());
+        final ReadMessageRequest readMessageRequest = new ReadMessageRequest(
+                sessionAttribute.userId(),
+                pingData.chatRoomId(),
+                pingData.lastMessageId()
+        );
         final List<ReadMessageDto> readMessageDtos = messageService.readAllByLastMessageId(readMessageRequest);
 
         final List<MessageDto> messageDtos = convertToMessageDto(readMessageDtos, userSession);
-        final HandleMessageResponse handleMessageResponse = new HandleMessageResponse(SendMessageStatus.SUCCESS, messageDtos);
-        return List.of(new SendMessageDto(userSession, new TextMessage(objectMapper.writeValueAsString(handleMessageResponse))));
+        final HandleMessageResponse handleMessageResponse = new HandleMessageResponse(
+                SendMessageStatus.SUCCESS,
+                messageDtos
+        );
+        return List.of(new SendMessageDto(
+                userSession,
+                new TextMessage(objectMapper.writeValueAsString(handleMessageResponse))
+        ));
     }
 
-    private List<MessageDto> convertToMessageDto(final List<ReadMessageDto> readMessageDtos, final WebSocketSession session) {
+    private List<MessageDto> convertToMessageDto(
+            final List<ReadMessageDto> readMessageDtos,
+            final WebSocketSession session
+    ) {
         return readMessageDtos.stream()
-                .map(readMessageDto -> MessageDto.of(readMessageDto, isMyMessage(session, readMessageDto.writerId())))
-                .toList();
+                              .map(readMessageDto -> MessageDto.of(readMessageDto,
+                                                                   isMyMessage(session, readMessageDto.writerId())
+                              ))
+                              .toList();
     }
 
-    private List<SendMessageDto> createSendMessageResponse(final Map<String, String> data, final SessionAttributeDto sessionAttribute) throws JsonProcessingException {
+    private List<SendMessageDto> createSendMessageResponse(
+            final Map<String, String> data,
+            final SessionAttributeDto sessionAttribute
+    ) throws JsonProcessingException {
         final Long writerId = sessionAttribute.userId();
         final ChatMessageDataDto messageData = objectMapper.convertValue(data, ChatMessageDataDto.class);
         final CreateMessageDto createMessageDto = createMessageDto(messageData, writerId);
@@ -102,11 +124,11 @@ public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTe
         return createSendMessages(message, writerId, createMessageDto.chatRoomId());
     }
 
-    private CreateMessageDto createMessageDto(final ChatMessageDataDto messageData, final Long userId) {
-        final CreateMessageRequest request = new CreateMessageRequest(
-                messageData.receiverId(),
-                messageData.contents()
-        );
+    private CreateMessageDto createMessageDto(
+            final ChatMessageDataDto messageData,
+            final Long userId
+    ) {
+        final CreateMessageRequest request = new CreateMessageRequest(messageData.receiverId(), messageData.contents());
 
         return CreateMessageDto.of(userId, messageData.chatRoomId(), request);
     }
@@ -119,8 +141,8 @@ public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTe
             final String profileImageAbsoluteUrl = String.valueOf(sessionAttribute.baseUrl());
             messageNotificationEventPublisher.publishEvent(new MessageNotificationEvent(
                     message,
-                    profileImageAbsoluteUrl
-            ));
+                    profileImageAbsoluteUrl)
+            );
         }
     }
 
@@ -142,18 +164,22 @@ public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTe
         return sendMessageDtos;
     }
 
-    private TextMessage createTextMessage(
-            final MessageDto messageDto
-    ) throws JsonProcessingException {
-        final HandleMessageResponse handleMessageResponse = new HandleMessageResponse(SendMessageStatus.SUCCESS, List.of(messageDto));
-
-        return new TextMessage(objectMapper.writeValueAsString(handleMessageResponse));
-    }
-
-    private boolean isMyMessage(final WebSocketSession session, final Long writerId) {
+    private boolean isMyMessage(
+            final WebSocketSession session,
+            final Long writerId
+    ) {
         final long userId = Long.parseLong(String.valueOf(session.getAttributes().get("userId")));
 
         return writerId.equals(userId);
+    }
+
+    private TextMessage createTextMessage(final MessageDto messageDto) throws JsonProcessingException {
+        final HandleMessageResponse handleMessageResponse = new HandleMessageResponse(
+                SendMessageStatus.SUCCESS,
+                List.of(messageDto)
+        );
+
+        return new TextMessage(objectMapper.writeValueAsString(handleMessageResponse));
     }
 
     private void updateReadMessageLog(
