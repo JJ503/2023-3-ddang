@@ -2,7 +2,7 @@ package com.ddang.ddang.websocket.handler.dto;
 
 import java.util.Arrays;
 
-public enum ChattingType {
+public enum ChatMessageType {
 
     MESSAGE("message"),
     PING("ping"),
@@ -10,12 +10,12 @@ public enum ChattingType {
 
     private final String value;
 
-    ChattingType(final String value) {
+    ChatMessageType(final String value) {
         this.value = value;
     }
 
-    public static ChattingType findValue(final String value) {
-        return Arrays.stream(ChattingType.values())
+    public static ChatMessageType findMessageType(final String value) {
+        return Arrays.stream(ChatMessageType.values())
                 .filter(chattingType -> chattingType.value.equals(value))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("잘못된 채팅 타입입니다."));

@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SuppressWarnings("NonAsciiCharacters")
-class ChattingTypeTest {
+class ChatMessageTypeTest {
 
     @Test
     void 타입에_해당하는_enum을_반환한다() {
@@ -16,10 +16,10 @@ class ChattingTypeTest {
         final Map<String, String> data = Map.of("type", "message");
 
         // when
-        final ChattingType actual = ChattingType.findValue(data.get("type"));
+        final ChatMessageType actual = ChatMessageType.findMessageType(data.get("type"));
 
         // then
-        assertThat(actual).isEqualTo(ChattingType.MESSAGE);
+        assertThat(actual).isEqualTo(ChatMessageType.MESSAGE);
     }
 
 
@@ -29,6 +29,6 @@ class ChattingTypeTest {
         final Map<String, String> data = Map.of("type", "wrong type");
 
         // when & then
-        assertThatThrownBy(() -> ChattingType.findValue(data.get("type"))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ChatMessageType.findMessageType(data.get("type"))).isInstanceOf(IllegalArgumentException.class);
     }
 }

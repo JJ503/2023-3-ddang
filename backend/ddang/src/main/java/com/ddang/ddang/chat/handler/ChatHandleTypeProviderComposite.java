@@ -1,6 +1,6 @@
 package com.ddang.ddang.chat.handler;
 
-import com.ddang.ddang.websocket.handler.dto.ChattingType;
+import com.ddang.ddang.websocket.handler.dto.ChatMessageType;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -10,14 +10,14 @@ import java.util.stream.Collectors;
 @Component
 public class ChatHandleTypeProviderComposite {
 
-    private final Map<ChattingType, TypeHandleProvider> mappings;
+    private final Map<ChatMessageType, ChatHandleProvider> mappings;
 
-    public ChatHandleTypeProviderComposite(final Set<TypeHandleProvider> providers) {
+    public ChatHandleTypeProviderComposite(final Set<ChatHandleProvider> providers) {
         this.mappings = providers.stream()
-                                 .collect(Collectors.toMap(TypeHandleProvider::supportsChatType, provider -> provider));
+                                 .collect(Collectors.toMap(ChatHandleProvider::supportsChatType, provider -> provider));
     }
 
-    public TypeHandleProvider findProvider(final ChattingType chattingType) {
-        return mappings.get(chattingType);
+    public ChatHandleProvider findProvider(final ChatMessageType chatMessageType) {
+        return mappings.get(chatMessageType);
     }
 }

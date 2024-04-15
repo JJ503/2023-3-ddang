@@ -11,7 +11,7 @@ import com.ddang.ddang.chat.handler.dto.HandleMessageResponse;
 import com.ddang.ddang.chat.handler.dto.MessageDto;
 import com.ddang.ddang.chat.handler.dto.SendMessageStatus;
 import com.ddang.ddang.chat.presentation.dto.request.CreateMessageRequest;
-import com.ddang.ddang.websocket.handler.dto.ChattingType;
+import com.ddang.ddang.websocket.handler.dto.ChatMessageType;
 import com.ddang.ddang.websocket.handler.dto.SendMessageDto;
 import com.ddang.ddang.websocket.handler.dto.SessionAttributeDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,7 +29,7 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-public class ChatHandleTypeProvider implements TypeHandleProvider {
+public class MessageTypeHandler implements ChatHandleProvider {
 
     private final WebSocketChatSessions sessions;
     private final ObjectMapper objectMapper;
@@ -38,8 +38,8 @@ public class ChatHandleTypeProvider implements TypeHandleProvider {
     private final ApplicationEventPublisher messageNotificationEventPublisher;
 
     @Override
-    public ChattingType supportsChatType() {
-        return ChattingType.MESSAGE;
+    public ChatMessageType supportsChatType() {
+        return ChatMessageType.MESSAGE;
     }
 
     @Override

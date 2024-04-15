@@ -7,7 +7,7 @@ import com.ddang.ddang.chat.handler.dto.HandleMessageResponse;
 import com.ddang.ddang.chat.handler.dto.MessageDto;
 import com.ddang.ddang.chat.handler.dto.SendMessageStatus;
 import com.ddang.ddang.chat.presentation.dto.request.ReadMessageRequest;
-import com.ddang.ddang.websocket.handler.dto.ChattingType;
+import com.ddang.ddang.websocket.handler.dto.ChatMessageType;
 import com.ddang.ddang.websocket.handler.dto.SendMessageDto;
 import com.ddang.ddang.websocket.handler.dto.SessionAttributeDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,14 +22,14 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class PingHandleTypeProvider implements TypeHandleProvider {
+public class PingHandler implements ChatHandleProvider {
 
     private final ObjectMapper objectMapper;
     private final MessageService messageService;
 
     @Override
-    public ChattingType supportsChatType() {
-        return ChattingType.PING;
+    public ChatMessageType supportsChatType() {
+        return ChatMessageType.PING;
     }
 
     // TODO: 2024/04/15 예외 처리
