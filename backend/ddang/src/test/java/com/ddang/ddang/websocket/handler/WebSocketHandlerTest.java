@@ -1,5 +1,6 @@
 package com.ddang.ddang.websocket.handler;
 
+import com.ddang.ddang.chat.handler.ChatHandleTypeProviderComposite;
 import com.ddang.ddang.chat.handler.ChatWebSocketHandleTextMessageProvider;
 import com.ddang.ddang.configuration.IsolateDatabase;
 import com.ddang.ddang.websocket.handler.dto.SendMessageDto;
@@ -9,9 +10,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -23,6 +27,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+@ExtendWith({MockitoExtension.class})
 @IsolateDatabase
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -33,6 +38,9 @@ class WebSocketHandlerTest extends WebSocketHandlerTestFixture {
 
     @MockBean
     WebSocketHandleTextMessageProviderComposite providerComposite;
+
+    @MockBean
+    ChatHandleTypeProviderComposite chatHandleTypeProviderComposite;
 
     @Autowired
     WebSocketHandler webSocketHandler;
@@ -64,7 +72,7 @@ class WebSocketHandlerTest extends WebSocketHandlerTestFixture {
         given(session.getAttributes()).willReturn(세션_attribute_정보);
 
         // when
-        webSocketHandler.afterConnectionClosed(session, null);
+        webSocketHandler.afterConnectionClosed(session, CloseStatus.NORMAL);
 
         // then
         verify(provider, times(1)).remove(any(WebSocketSession.class));
