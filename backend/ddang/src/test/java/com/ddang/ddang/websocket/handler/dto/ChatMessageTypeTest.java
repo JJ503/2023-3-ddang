@@ -1,5 +1,6 @@
 package com.ddang.ddang.websocket.handler.dto;
 
+import com.ddang.ddang.websocket.handler.exception.UnsupportedChattingTypeException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -29,6 +30,7 @@ class ChatMessageTypeTest {
         final Map<String, String> data = Map.of("type", "wrong type");
 
         // when & then
-        assertThatThrownBy(() -> ChatMessageType.findMessageType(data.get("type"))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ChatMessageType.findMessageType(data.get("type")))
+                .isInstanceOf(UnsupportedChattingTypeException.class);
     }
 }
