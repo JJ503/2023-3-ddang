@@ -1,6 +1,5 @@
 package com.ddang.ddang.websocket.handler;
 
-import com.ddang.ddang.chat.handler.ChatHandleTypeProviderComposite;
 import com.ddang.ddang.chat.handler.ChatWebSocketHandleTextMessageProvider;
 import com.ddang.ddang.configuration.IsolateDatabase;
 import com.ddang.ddang.websocket.handler.dto.SendMessageDto;
@@ -38,9 +37,6 @@ class WebSocketHandlerTest extends WebSocketHandlerTestFixture {
 
     @MockBean
     WebSocketHandleTextMessageProviderComposite providerComposite;
-
-    @MockBean
-    ChatHandleTypeProviderComposite chatHandleTypeProviderComposite;
 
     @Autowired
     WebSocketHandler webSocketHandler;
