@@ -2,7 +2,6 @@ package com.ddang.ddang.chat.application;
 
 import com.ddang.ddang.chat.application.event.CreateReadMessageLogEvent;
 import com.ddang.ddang.chat.application.event.UpdateReadMessageLogEvent;
-import com.ddang.ddang.chat.application.exception.ReadMessageLogNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,8 +30,12 @@ public class LastReadMessageLogEventListener {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void update(final UpdateReadMessageLogEvent updateReadMessageLogEvent) {
         try {
+            log.info(
+                    "LastReadMessageLogEventListener.update updateReadMessageLogEvent : {}",
+                    updateReadMessageLogEvent.toString()
+            );
             lastReadMessageLogService.update(updateReadMessageLogEvent);
-        } catch (final ReadMessageLogNotFoundException ex) {
+        } catch (final Exception ex) {
             log.error("exception type : {}, ", ex.getClass().getSimpleName(), ex);
         }
     }

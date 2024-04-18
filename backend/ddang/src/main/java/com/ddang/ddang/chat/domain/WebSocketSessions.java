@@ -1,6 +1,7 @@
 package com.ddang.ddang.chat.domain;
 
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -9,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@ToString
 @Slf4j
 @Getter
 public class WebSocketSessions {
