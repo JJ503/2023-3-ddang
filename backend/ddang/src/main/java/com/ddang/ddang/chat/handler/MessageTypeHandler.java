@@ -71,7 +71,7 @@ public class MessageTypeHandler implements ChatHandleProvider {
             final Message message,
             final SessionAttributeDto sessionAttribute
     ) {
-        log.info("MessageTypeHandler.sendNotificationIfRecevierNotInSession userId : {}", sessionAttribute.userId());
+        log.info("MessageTypeHandler.sendNotificationIfRecevierNotInSession receiverId : {}, chatRoomId : {}", message.getReceiver().getId(), message.getChatRoom().getId());
         log.info(
                 "MessageTypeHandler.sendNotificationIfReceiverNotInSession sessions : {}",
                 sessions.getChatRoomSessions()
