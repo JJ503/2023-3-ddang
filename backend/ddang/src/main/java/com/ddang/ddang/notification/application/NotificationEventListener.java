@@ -37,6 +37,7 @@ public class NotificationEventListener {
     @TransactionalEventListener
     public void sendMessageNotification(final MessageNotificationEvent messageNotificationEvent) {
         try {
+            log.info("NotificationEventListener.sendMessageNotification : {}", messageNotificationEvent.toString());
             final Message message = messageNotificationEvent.message();
             final ProfileImage profileImage = message.getWriter().getProfileImage();
             final CreateNotificationDto createNotificationDto = new CreateNotificationDto(
@@ -48,7 +49,7 @@ public class NotificationEventListener {
                     ImageUrlCalculator.calculateBy(messageNotificationEvent.profileImageAbsoluteUrl(), ImageStoreNameProcessor.process(profileImage))
             );
             notificationService.send(createNotificationDto);
-        } catch (final FirebaseMessagingException ex) {
+        } catch (final Exception ex) {
             log.error("exception type : {}, ", ex.getClass().getSimpleName(), ex);
         }
     }

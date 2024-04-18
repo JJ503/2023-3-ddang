@@ -19,6 +19,7 @@ import com.ddang.ddang.websocket.handler.dto.SessionAttributeDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MessageTypeHandler implements ChatHandleProvider {
@@ -69,7 +71,13 @@ public class MessageTypeHandler implements ChatHandleProvider {
             final Message message,
             final SessionAttributeDto sessionAttribute
     ) {
+        log.info("MessageTypeHandler.sendNotificationIfRecevierNotInSession userId : {}", sessionAttribute.userId());
+        log.info(
+                "MessageTypeHandler.sendNotificationIfReceiverNotInSession sessions : {}",
+                sessions.getChatRoomSessions()
+        );
         if (!sessions.containsByUserId(message.getChatRoom().getId(), message.getReceiver().getId())) {
+            log.info("MessageTypeHandler.sendNotificationIfReceiverNotInSession if문 내부");
             final String profileImageAbsoluteUrl = String.valueOf(sessionAttribute.baseUrl());
             messageNotificationEventPublisher.publishEvent(new MessageNotificationEvent(
                     message,
