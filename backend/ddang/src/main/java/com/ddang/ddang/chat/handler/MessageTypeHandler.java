@@ -92,6 +92,7 @@ public class MessageTypeHandler implements ChatHandleProvider {
             final Long chatRoomId
     ) throws JsonProcessingException {
         final WebSocketSessions groupSessions = sessions.findSessionsByChatRoomId(message.getChatRoom().getId());
+        log.info("MessageTypeHandler.createSendMessages groupSessions : {}", groupSessions);
 
         final List<SendMessageDto> sendMessageDtos = new ArrayList<>();
         for (final WebSocketSession currentSession : groupSessions.getSessions()) {

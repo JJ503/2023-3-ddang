@@ -1,6 +1,7 @@
 package com.ddang.ddang.chat.domain;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Collections;
@@ -8,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Getter
 public class WebSocketSessions {
 
@@ -24,6 +26,7 @@ public class WebSocketSessions {
     }
 
     public boolean contains(final Long userId) {
+        log.info("WebSocketSessions.contains userId : {}, currentSessions : {}", userId, sessions);
         return sessions.stream()
                        .anyMatch(session -> session.getAttributes().get(USER_ID_KEY) == userId);
     }
