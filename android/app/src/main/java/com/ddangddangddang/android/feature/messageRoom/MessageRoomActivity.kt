@@ -65,7 +65,7 @@ class MessageRoomActivity :
         super.onCreate(savedInstanceState)
         registerAnalytics(javaClass.simpleName, lifecycle)
         binding.viewModel = viewModel
-        if (viewModel.messageRoomInfo.value == null) viewModel.loadMessageRoom(roomId)
+        if (viewModel.roomId == null) viewModel.setup(roomId)
         setupViewModel()
         setupMessageRecyclerView()
     }

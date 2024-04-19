@@ -36,10 +36,14 @@ class MessageRoomViewModel @Inject constructor(
     private val _event: SingleLiveEvent<MessageRoomEvent> = SingleLiveEvent()
     val event: LiveData<MessageRoomEvent>
         get() = _event
-    private val _messageRoomInfo: MutableLiveData<MessageRoomDetailModel> = MutableLiveData()
 
+    private var _roomId: Long? = null
+    val roomId: Long?
+        get() = _roomId
+    private val _messageRoomInfo: MutableLiveData<MessageRoomDetailModel> = MutableLiveData()
     val messageRoomInfo: LiveData<MessageRoomDetailModel>
         get() = _messageRoomInfo
+
     private val _messages: MutableLiveData<List<MessageViewItem>> = MutableLiveData()
     val messages: LiveData<List<MessageViewItem>>
         get() = _messages
@@ -49,7 +53,9 @@ class MessageRoomViewModel @Inject constructor(
 
     private var isSubmitLoading: Boolean = false
 
-    init {
+    fun setup(roomId: Long) {
+        _roomId = roomId
+        loadMessageRoom()
         observeChatMessage()
         observeWebSocketEvent()
     }
@@ -57,7 +63,7 @@ class MessageRoomViewModel @Inject constructor(
     private fun observeChatMessage() {
         viewModelScope.launch {
             realTimeRepository.observeChatMessage().collect {
-                when (it.sendMessageStatus) {
+                when (it.status) {
                     "SUCCESS" -> {
                         isPing = true
                         addMessages(it.messages.map { it.toPresentation() }.toViewItems())
@@ -89,25 +95,27 @@ class MessageRoomViewModel @Inject constructor(
         }
     }
 
-    fun loadMessageRoom(roomId: Long) {
+    private fun loadMessageRoom() {
         viewModelScope.launch {
-            when (val response = chatRepository.getChatRoom(roomId)) {
-                is ApiResponse.Success -> {
-                    _messageRoomInfo.value = response.body.toPresentation()
-                }
+            _roomId?.let {
+                when (val response = chatRepository.getChatRoom(it)) {
+                    is ApiResponse.Success -> {
+                        _messageRoomInfo.value = response.body.toPresentation()
+                    }
 
-                is ApiResponse.Failure -> {
-                    _event.value =
-                        MessageRoomEvent.FailureEvent.LoadRoomInfo(ErrorType.FAILURE(response.error))
-                }
+                    is ApiResponse.Failure -> {
+                        _event.value =
+                            MessageRoomEvent.FailureEvent.LoadRoomInfo(ErrorType.FAILURE(response.error))
+                    }
 
-                is ApiResponse.NetworkError -> {
-                    _event.value =
-                        MessageRoomEvent.FailureEvent.LoadRoomInfo(ErrorType.NETWORK_ERROR)
-                }
+                    is ApiResponse.NetworkError -> {
+                        _event.value =
+                            MessageRoomEvent.FailureEvent.LoadRoomInfo(ErrorType.NETWORK_ERROR)
+                    }
 
-                is ApiResponse.Unexpected -> {
-                    _event.value = MessageRoomEvent.FailureEvent.LoadRoomInfo(ErrorType.UNEXPECTED)
+                    is ApiResponse.Unexpected -> {
+                        _event.value = MessageRoomEvent.FailureEvent.LoadRoomInfo(ErrorType.UNEXPECTED)
+                    }
                 }
             }
         }
@@ -174,12 +182,12 @@ class MessageRoomViewModel @Inject constructor(
 
     private fun sendPing() {
         viewModelScope.launch {
-            _messageRoomInfo.value?.let {
+            _roomId?.let {
                 if (isSubmitLoading) return@launch
                 isSubmitLoading = true
 
                 val data = WebSocketRequest.WebSocketDataRequest.ChatPingDataRequest(
-                    it.roomId,
+                    it,
                     lastMessageId,
                 )
 

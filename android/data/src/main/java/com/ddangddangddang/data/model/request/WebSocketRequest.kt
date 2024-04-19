@@ -19,8 +19,8 @@ sealed class WebSocketRequest(val type: String, open val data: WebSocketDataRequ
         ) : WebSocketDataRequest(MESSAGE_TYPE)
 
         companion object {
-            private const val PING_TYPE = "ping"
-            private const val MESSAGE_TYPE = "message"
+            private const val PING_TYPE = "PING"
+            private const val MESSAGE_TYPE = "MESSAGE"
         }
     }
 }
