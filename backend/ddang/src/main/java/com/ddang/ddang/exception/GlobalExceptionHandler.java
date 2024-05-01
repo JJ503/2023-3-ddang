@@ -42,6 +42,8 @@ import com.ddang.ddang.review.application.exception.AlreadyReviewException;
 import com.ddang.ddang.review.application.exception.ReviewNotFoundException;
 import com.ddang.ddang.user.application.exception.AlreadyExistsNameException;
 import com.ddang.ddang.user.application.exception.UserNotFoundException;
+import com.ddang.ddang.websocket.handler.exception.UnsupportedChattingTypeException;
+import com.ddang.ddang.websocket.handler.exception.UnsupportedTextMessageTypeException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -430,6 +432,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(WithdrawalNotAllowedException.class)
     public ResponseEntity<ExceptionResponse> handleWithdrawalNotAllowedException(final WithdrawalNotAllowedException ex) {
+        logger.warn(String.format(LOG_MESSAGE_FORMAT, ex.getClass().getSimpleName(), ex.getMessage()));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                             .body(new ExceptionResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnsupportedTextMessageTypeException.class)
+    public ResponseEntity<ExceptionResponse> handleUnsupportedTextMessageTypeException(
+            final UnsupportedTextMessageTypeException ex
+    ) {
+        logger.warn(String.format(LOG_MESSAGE_FORMAT, ex.getClass().getSimpleName(), ex.getMessage()));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                             .body(new ExceptionResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnsupportedChattingTypeException.class)
+    public ResponseEntity<ExceptionResponse> handleUnsupportedChattingTypeException(
+            final UnsupportedChattingTypeException ex
+    ) {
         logger.warn(String.format(LOG_MESSAGE_FORMAT, ex.getClass().getSimpleName(), ex.getMessage()));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
