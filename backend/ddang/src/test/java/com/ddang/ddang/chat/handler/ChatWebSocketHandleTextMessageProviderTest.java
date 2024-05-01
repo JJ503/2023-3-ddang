@@ -1,5 +1,6 @@
 package com.ddang.ddang.chat.handler;
 
+import com.ddang.ddang.chat.application.event.CreateReadMessageLogEvent;
 import com.ddang.ddang.chat.application.event.MessageNotificationEvent;
 import com.ddang.ddang.chat.application.event.UpdateReadMessageLogEvent;
 import com.ddang.ddang.chat.domain.WebSocketChatSessions;
@@ -41,6 +42,9 @@ import static org.mockito.BDDMockito.willReturn;
 class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleTextMessageProviderTestFixture {
 
     @Autowired
+    ApplicationEvents applicationEvents;
+
+    @Autowired
     ChatWebSocketHandleTextMessageProvider provider;
 
     @Autowired
@@ -63,6 +67,8 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
 
     @Autowired
     ObjectMapper objectMapper;
+    @Autowired
+    private ChatWebSocketHandleTextMessageProvider chatWebSocketHandleTextMessageProvider;
 
     @Test
     void 지원하는_웹소켓_핸들링_타입을_반환한다() {
@@ -172,6 +178,38 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
 
         // then
         assertThat(actual).hasSize(1);
+    }
+
+    @Test
+    void 메시지_전송시_알림_전송_이벤트를_호출한다() throws Exception {
+        // given
+        given(writerSession.getAttributes()).willReturn(발신자_세션_attribute_정보);
+        willDoNothing().given(sessions).add(writerSession, 채팅방.getId());
+        willReturn(false).given(sessions).containsByUserId(채팅방.getId(), 수신자.getId());
+        willReturn(Set.of(writerSession)).given(sessions).getSessionsByChatRoomId(채팅방.getId());
+
+        // when
+        provider.handleCreateSendMessage(writerSession, 메시지_전송_데이터);
+        final long actual = events.stream(MessageNotificationEvent.class).count();
+
+        // then
+        assertThat(actual).isEqualTo(1);
+    }
+
+    @Test
+    void 메시지_전송시_메시지_로그_업데이트_이벤트를_호출한다() throws Exception {
+        // given
+        given(writerSession.getAttributes()).willReturn(발신자_세션_attribute_정보);
+        willDoNothing().given(sessions).add(writerSession, 채팅방.getId());
+        willReturn(false).given(sessions).containsByUserId(채팅방.getId(), 수신자.getId());
+        willReturn(Set.of(writerSession)).given(sessions).getSessionsByChatRoomId(채팅방.getId());
+
+        // when
+        provider.handleCreateSendMessage(writerSession, 메시지_전송_데이터);
+        final long actual = events.stream(UpdateReadMessageLogEvent.class).count();
+
+        // then
+        assertThat(actual).isEqualTo(1);
     }
 
     @Test
