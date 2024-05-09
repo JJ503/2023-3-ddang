@@ -16,16 +16,25 @@ import com.ddang.ddang.websocket.handler.dto.TextMessageType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.PingMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.CONNECTED;
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.USER_ID;
+
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTextMessageProvider {
@@ -115,7 +124,7 @@ public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTe
     }
 
     private boolean isMyMessage(final WebSocketSession session, final Long writerId) {
-        final long userId = Long.parseLong(String.valueOf(session.getAttributes().get("userId")));
+        final long userId = Long.parseLong(String.valueOf(session.getAttributes().get(USER_ID.getName())));
 
         return writerId.equals(userId);
     }
@@ -136,6 +145,39 @@ public class ChatWebSocketHandleTextMessageProvider implements WebSocketHandleTe
 
     @Override
     public void remove(final WebSocketSession session) {
+        log.info("{} 연결 종료", session);
         sessions.remove(session);
+    }
+
+    @Scheduled(fixedDelay = 60000)
+    public void sendPingSessions() {
+        final Set<WebSocketSession> webSocketSessions = getWebSocketSessions();
+
+        webSocketSessions.parallelStream()
+                         .forEach(this::sendPingMessage);
+    }
+
+    private Set<WebSocketSession> getWebSocketSessions() {
+        return sessions.getChatRoomSessions()
+                       .values()
+                       .stream()
+                       .flatMap(webSocketSessions -> webSocketSessions.getSessions().stream())
+                       .collect(Collectors.toSet());
+    }
+
+    private void sendPingMessage(final WebSocketSession session) {
+        final Map<String, Object> attributes = session.getAttributes();
+        final boolean connected = (boolean) attributes.get(CONNECTED.getName());
+        if (!connected) {
+            sessions.remove(session);
+            return;
+        }
+
+        attributes.put(CONNECTED.getName(), false);
+        try {
+            session.sendMessage(new PingMessage());
+        } catch (IOException e) {
+            log.error("ping 보내기 실패 : {} ", session);
+        }
     }
 }

@@ -12,11 +12,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
 
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.CONNECTED;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.BDDMockito.given;
@@ -68,5 +71,17 @@ class WebSocketHandlerTest extends WebSocketHandlerTestFixture {
 
         // then
         verify(provider, times(1)).remove(any(WebSocketSession.class));
+    }
+
+    @Test
+    void pong_메시지_수신시_연결_상태를_참으로_변환한다() {
+        // given
+        given(session.getAttributes()).willReturn(세션_attribute_정보);
+
+        // when
+        webSocketHandler.handlePongMessage(session, new PongMessage());
+
+        // then
+        assertThat((boolean) 세션_attribute_정보.get(CONNECTED.getName())).isTrue();
     }
 }

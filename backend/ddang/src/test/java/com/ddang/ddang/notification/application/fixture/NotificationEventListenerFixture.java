@@ -34,6 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.BASE_URL;
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.CONNECTED;
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.USER_ID;
+
 @SuppressWarnings("NonAsciiCharacters")
 public class NotificationEventListenerFixture {
 
@@ -117,8 +121,9 @@ public class NotificationEventListenerFixture {
         bidRepository.save(bid);
 
         세션_attribute_정보 = new HashMap<>(Map.of(
-                "userId", 발신자_겸_판매자.getId(),
-                "baseUrl", 이미지_절대_경로
+                USER_ID.getName(), 발신자_겸_판매자.getId(),
+                BASE_URL.getName(), 이미지_절대_경로,
+                CONNECTED.getName(), true
         ));
         메시지_전송_데이터 = Map.of(
                 "chatRoomId", String.valueOf(채팅방.getId()),

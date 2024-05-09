@@ -7,11 +7,12 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.USER_ID;
+
 @Getter
 public class WebSocketSessions {
 
     protected static final String CHAT_ROOM_ID_KEY = "chatRoomId";
-    private static final String USER_ID_KEY = "userId";
 
     private final Set<WebSocketSession> sessions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -24,7 +25,7 @@ public class WebSocketSessions {
 
     public boolean contains(final Long userId) {
         return sessions.stream()
-                       .anyMatch(session -> session.getAttributes().get(USER_ID_KEY) == userId);
+                       .anyMatch(session -> session.getAttributes().get(USER_ID.getName()) == userId);
     }
 
     public void remove(final WebSocketSession session) {

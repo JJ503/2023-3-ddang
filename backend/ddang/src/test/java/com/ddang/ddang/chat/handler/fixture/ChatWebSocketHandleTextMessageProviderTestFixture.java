@@ -10,7 +10,6 @@ import com.ddang.ddang.chat.application.LastReadMessageLogService;
 import com.ddang.ddang.chat.application.event.CreateReadMessageLogEvent;
 import com.ddang.ddang.chat.domain.ChatRoom;
 import com.ddang.ddang.chat.domain.repository.ChatRoomRepository;
-import com.ddang.ddang.chat.domain.repository.ReadMessageLogRepository;
 import com.ddang.ddang.image.domain.ProfileImage;
 import com.ddang.ddang.user.domain.Reliability;
 import com.ddang.ddang.user.domain.User;
@@ -21,6 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.BASE_URL;
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.CONNECTED;
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.USER_ID;
 
 @SuppressWarnings("NonAsciiCharacters")
 public class ChatWebSocketHandleTextMessageProviderTestFixture {
@@ -46,6 +49,7 @@ public class ChatWebSocketHandleTextMessageProviderTestFixture {
 
     protected Map<String, Object> 발신자_세션_attribute_정보;
     protected Map<String, Object> 수신자_세션_attribute_정보;
+    protected Map<String, Object> 연결이_끊긴_세션_attribute_정보;
     protected Map<String, String> 메시지_전송_데이터;
 
     protected CreateReadMessageLogEvent 메시지_로그_생성_이벤트;
@@ -86,8 +90,21 @@ public class ChatWebSocketHandleTextMessageProviderTestFixture {
 
         chatRoomRepository.save(채팅방);
 
-        발신자_세션_attribute_정보 = new HashMap<>(Map.of("userId", 발신자.getId(), "baseUrl", "/images"));
-        수신자_세션_attribute_정보 = new HashMap<>(Map.of("userId", 수신자.getId(), "baseUrl", "/images"));
+        발신자_세션_attribute_정보 = new HashMap<>(Map.of(
+                USER_ID.getName(), 발신자.getId(),
+                BASE_URL.getName(), "/images",
+                CONNECTED.getName(), true
+        ));
+        수신자_세션_attribute_정보 = new HashMap<>(Map.of(
+                USER_ID.getName(), 수신자.getId(),
+                BASE_URL.getName(), "/images",
+                CONNECTED.getName(), true
+        ));
+        연결이_끊긴_세션_attribute_정보 = new HashMap<>(Map.of(
+                USER_ID.getName(), 수신자.getId(),
+                BASE_URL.getName(), "/images",
+                CONNECTED.getName(), false
+        ));
         메시지_전송_데이터 = Map.of(
                 "chatRoomId", String.valueOf(채팅방.getId()),
                 "receiverId", String.valueOf(수신자.getId()),

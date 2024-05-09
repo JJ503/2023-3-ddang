@@ -14,6 +14,10 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 
 import java.util.Map;
 
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.BASE_URL;
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.CONNECTED;
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.USER_ID;
+
 @Component
 @RequiredArgsConstructor
 public class WebSocketInterceptor extends HttpSessionHandshakeInterceptor {
@@ -27,8 +31,9 @@ public class WebSocketInterceptor extends HttpSessionHandshakeInterceptor {
             final WebSocketHandler wsHandler,
             final Map<String, Object> attributes
     ) throws Exception {
-        attributes.put("userId", findUserId(request));
-        attributes.put("baseUrl", ImageRelativeUrl.USER.calculateAbsoluteUrl());
+        attributes.put(USER_ID.getName(), findUserId(request));
+        attributes.put(BASE_URL.getName(), ImageRelativeUrl.USER.calculateAbsoluteUrl());
+        attributes.put(CONNECTED.getName(), true);
 
         return super.beforeHandshake(request, response, wsHandler, attributes);
     }

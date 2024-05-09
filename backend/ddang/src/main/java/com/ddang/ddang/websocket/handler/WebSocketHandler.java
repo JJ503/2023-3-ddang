@@ -7,17 +7,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.List;
+import java.util.Map;
+
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.CONNECTED;
+import static com.ddang.ddang.websocket.handler.dto.WebSocketAttributeKey.TYPE;
 
 @Component
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
-
-    private static final String TYPE_KEY = "type";
 
     private final WebSocketHandleTextMessageProviderComposite providerComposite;
     private final ObjectMapper objectMapper;
@@ -26,7 +29,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(final WebSocketSession session, final TextMessage message) throws Exception {
         final String payload = message.getPayload();
         final TextMessageDto textMessageDto = objectMapper.readValue(payload, TextMessageDto.class);
-        session.getAttributes().put(TYPE_KEY, textMessageDto.type());
+        session.getAttributes().put(TYPE.getName(), textMessageDto.type());
 
         final WebSocketHandleTextMessageProvider provider = providerComposite.findProvider(textMessageDto.type());
         final List<SendMessageDto> sendMessageDtos = provider.handleCreateSendMessage(session, textMessageDto.data());
@@ -38,9 +41,15 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) {
-        final String type = String.valueOf(session.getAttributes().get(TYPE_KEY));
+        final String type = String.valueOf(session.getAttributes().get(TYPE.getName()));
         final TextMessageType textMessageType = TextMessageType.valueOf(type);
         final WebSocketHandleTextMessageProvider provider = providerComposite.findProvider(textMessageType);
         provider.remove(session);
+    }
+
+    @Override
+    public void handlePongMessage(WebSocketSession session, PongMessage message) {
+        final Map<String, Object> attributes = session.getAttributes();
+        attributes.put(CONNECTED.getName(), true);
     }
 }

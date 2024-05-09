@@ -3,6 +3,7 @@ package com.ddang.ddang.chat.handler;
 import com.ddang.ddang.chat.application.event.MessageNotificationEvent;
 import com.ddang.ddang.chat.application.event.UpdateReadMessageLogEvent;
 import com.ddang.ddang.chat.domain.WebSocketChatSessions;
+import com.ddang.ddang.chat.domain.WebSocketSessions;
 import com.ddang.ddang.chat.domain.repository.ReadMessageLogRepository;
 import com.ddang.ddang.chat.handler.fixture.ChatWebSocketHandleTextMessageProviderTestFixture;
 import com.ddang.ddang.configuration.IsolateDatabase;
@@ -22,9 +23,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
+import org.springframework.web.socket.PingMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +36,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @IsolateDatabase
 @RecordApplicationEvents
@@ -47,6 +54,9 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
 
     @SpyBean
     WebSocketChatSessions sessions;
+
+    @SpyBean
+    WebSocketSessions webSocketSessions;
 
     @Mock
     WebSocketSession writerSession;
@@ -185,5 +195,36 @@ class ChatWebSocketHandleTextMessageProviderTest extends ChatWebSocketHandleText
         // then
         final boolean actual = sessions.containsByUserId(채팅방.getId(), 발신자.getId());
         assertThat(actual).isFalse();
+    }
+
+    @Test
+    void 저장되어_있는_세션에_ping_메시지를_보낸다() throws IOException {
+        // given
+        given(writerSession.getAttributes()).willReturn(발신자_세션_attribute_정보);
+        given(webSocketSessions.getSessions()).willReturn(Set.of(writerSession));
+        given(sessions.getChatRoomSessions()).willReturn(Map.of(채팅방.getId(), webSocketSessions));
+
+        // when
+        provider.sendPingSessions();
+
+        // then
+        verify(sessions, never()).remove(writerSession);
+        verify(writerSession, times(1)).sendMessage(new PingMessage());
+    }
+
+    @Test
+    void 연결이_끊긴_세션은_삭제한다() throws IOException {
+        // given
+        given(writerSession.getAttributes()).willReturn(연결이_끊긴_세션_attribute_정보);
+        given(webSocketSessions.getSessions()).willReturn(Set.of(writerSession));
+        given(sessions.getChatRoomSessions()).willReturn(Map.of(채팅방.getId(), webSocketSessions));
+        willDoNothing().given(sessions).remove(writerSession);
+
+        // when
+        provider.sendPingSessions();
+
+        // then
+        verify(sessions, times(1)).remove(writerSession);
+        verify(writerSession, never()).sendMessage(new PingMessage());
     }
 }
