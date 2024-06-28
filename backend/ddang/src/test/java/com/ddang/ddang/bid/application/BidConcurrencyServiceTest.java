@@ -13,15 +13,14 @@ import com.ddang.ddang.image.domain.AuctionImage;
 import com.ddang.ddang.user.domain.Reliability;
 import com.ddang.ddang.user.domain.User;
 import com.ddang.ddang.user.domain.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,8 +28,9 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @SuppressWarnings("NonAsciiCharacters")
 class BidConcurrencyServiceTest {
@@ -50,10 +50,13 @@ class BidConcurrencyServiceTest {
     @Autowired
     BidRepository bidRepository;
 
-    @Autowired
-    PlatformTransactionManager transactionManager;
+    @PersistenceContext
+    EntityManager em;
 
-    private TransactionTemplate transactionTemplate;
+//    @Autowired
+//    PlatformTransactionManager transactionManager;
+
+//    private TransactionTemplate transactionTemplate;
 
     private String 이미지_절대_url = "https://3-ddang.store/auctions/images";
     private Auction 경매;
@@ -61,8 +64,8 @@ class BidConcurrencyServiceTest {
 
     @BeforeEach
     void setUp() {
-        transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+//        transactionTemplate = new TransactionTemplate(transactionManager);
+//        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
         final User 판매자 = User.builder()
                              .name("판매자")
@@ -149,11 +152,13 @@ class BidConcurrencyServiceTest {
         경매.addAuctionImages(List.of(경매_이미지1));
         auctionRepository.save(경매);
 
+        System.out.println(auctionRepository.findAll());
+
 //        bidService.create(new CreateBidDto(경매.getId(), 1_000, 기존_입찰자.getId()), 이미지_절대_url);
 
         CreateBidDto 동시_입찰_요청_dto1 = new CreateBidDto(경매.getId(), 10_000, 입찰자1.getId());
         CreateBidDto 동시_입찰_요청_dto2 = new CreateBidDto(경매.getId(), 10_000, 입찰자2.getId());
-        CreateBidDto 동시_입찰_요청_dto3 = new CreateBidDto(경매.getId(), 10_000, 입찰자3.getId());
+        CreateBidDto 동시_입찰_요청_dto3 = new CreateBidDto(경매.getId(), 12_000, 입찰자3.getId());
         CreateBidDto 동시_입찰_요청_dto4 = new CreateBidDto(경매.getId(), 10_000, 입찰자4.getId());
         CreateBidDto 동시_입찰_요청_dto5 = new CreateBidDto(경매.getId(), 10_000, 입찰자5.getId());
         CreateBidDto 동시_입찰_요청_dto6 = new CreateBidDto(경매.getId(), 10_000, 입찰자6.getId());
@@ -181,32 +186,28 @@ class BidConcurrencyServiceTest {
         ExecutorService executorService = Executors.newFixedThreadPool(동시_입찰_요청들.size());
         CountDownLatch latch = new CountDownLatch(동시_입찰_요청들.size());
 
-//        for (CreateBidDto bidDto : 동시_입찰_요청들) {
-//            bidService.create(bidDto, 이미지_절대_url);
-//        }
-
+        final AtomicInteger successCount = new AtomicInteger();
+        final AtomicInteger failCount = new AtomicInteger();
         for (CreateBidDto bidDto : 동시_입찰_요청들) {
             executorService.submit(() -> {
                 try {
+                    System.out.println(bidDto);
                     bidService.create(bidDto, 이미지_절대_url);
-                } catch (IllegalStateException e) {
+                    successCount.getAndIncrement();
+                } catch (Exception e) {
+                    System.out.println("Exception 발생!!!!!");
+                    System.out.println(bidDto);
+                    e.printStackTrace();
+                    failCount.getAndIncrement();
                 } finally {
                     latch.countDown();
                 }
             });
         }
 
-//        for (CreateBidDto bidDto : 동시_입찰_요청들) {
-//            executorService.submit(() ->
-//                    transactionTemplate.execute((status -> {
-//                        bidService.create(bidDto, 이미지_절대_url);
-//                        latch.countDown();
-//                        return null;
-//                    }))
-//            );
-//        }
         latch.await();
 
+        System.out.printf("successCount: %d, failCount: %d\n", successCount.get(), failCount.get());
         final List<Bid> bids = bidRepository.findAllByAuctionId(경매.getId());
         System.out.println("final auction: " + auctionRepository.findAll());
         System.out.println("final bids: " + bids);
@@ -214,6 +215,7 @@ class BidConcurrencyServiceTest {
         if (auction.isPresent()) {
             System.out.println("final auction: " + auction.get());
             System.out.println("final lastbid: " + auction.get().auction().getLastBid());
+            System.out.println("final lastbid bidder: " + auction.get().auction().getLastBid().getBidder());
         } else {
             System.out.println("final auction: not found");
         }

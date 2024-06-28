@@ -2,14 +2,12 @@ package com.ddang.ddang.auction.domain.repository;
 
 import com.ddang.ddang.auction.domain.Auction;
 import com.ddang.ddang.auction.presentation.dto.request.ReadAuctionSearchCondition;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
-import com.ddang.ddang.bid.domain.Bid;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 
 public interface AuctionRepository {
 

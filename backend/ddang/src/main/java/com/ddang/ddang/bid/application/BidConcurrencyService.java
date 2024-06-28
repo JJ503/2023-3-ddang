@@ -1,5 +1,6 @@
 package com.ddang.ddang.bid.application;
 
+
 import com.ddang.ddang.auction.application.exception.AuctionNotFoundException;
 import com.ddang.ddang.auction.domain.Auction;
 import com.ddang.ddang.auction.domain.dto.AuctionAndImageDto;
@@ -29,7 +30,7 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class BidService {
+public class BidConcurrencyService {
 
     private final ApplicationEventPublisher bidEventPublisher;
     private final AuctionRepository auctionRepository;
@@ -39,14 +40,24 @@ public class BidService {
 
     @Transactional
     public Long create(final CreateBidDto bidDto, final String auctionImageAbsoluteUrl) {
-        System.out.println("createBidDto: " + bidDto);
+//        System.out.println("createBidDto: " + bidDto);
 
         final User bidder = userRepository.findById(bidDto.userId())
                                           .orElseThrow(() -> new UserNotFoundException("해당 사용자를 찾을 수 없습니다."));
+//        System.out.println(bidder);
+//        System.out.println(auctionRepository.findAll());
         final AuctionAndImageDto auctionAndImageDto =
-                auctionAndImageRepository.findDtoByAuctionId(bidDto.auctionId())
+                auctionAndImageRepository.findDtoByAuctionIdWithLock(bidDto.auctionId())
                                          .orElseThrow(() -> new AuctionNotFoundException("해당 경매를 찾을 수 없습니다."));
         final Auction auction = auctionAndImageDto.auction();
+//        System.out.println("find lastBid: " + auction.getLastBid());
+//
+//        final List<Bid> bids = bidRepository.findAllByAuctionId(auction.getId());
+//        System.out.println("find bids: " + bids);
+//        if (bids.size() > 0) {
+//            System.out.println("find bids auction: " + bids.get(0).getAuction());
+//            System.out.println("find bids auction lastibd: " + bids.get(0).getAuction().getLastBid());
+//        }
 
         checkInvalidAuction(auction);
         checkInvalidBid(auction, bidder, bidDto);
@@ -135,6 +146,9 @@ public class BidService {
         final Bid saveBid = bidRepository.save(createBid);
 
         auction.updateLastBid(saveBid);
+
+//        System.out.println("update auction: " + auction);
+//        System.out.println("update auction lastBid: " + auction.getLastBid());
 
         return saveBid;
     }

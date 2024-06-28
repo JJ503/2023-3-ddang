@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import com.ddang.ddang.bid.domain.Bid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -34,6 +33,11 @@ public class AuctionRepositoryImpl implements AuctionRepository {
     @Override
     public Optional<Auction> findTotalAuctionById(final Long id) {
         return jpaAuctionRepository.findTotalAuctionById(id);
+    }
+
+    @Override
+    public Optional<Auction> findTotalAuctionByIdWithLock(final Long id) {
+        return jpaAuctionRepository.findTotalAuctionByIdWithLock(id);
     }
 
     @Override
